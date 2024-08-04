@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Data to Firebase</title>
+    <link rel="stylesheet" href="style1.css">
+  <style>
+    body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+    padding: 20px;
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+/* General Styles for Form Elements */
+
+/* General Styles for Form Elements */
+.form-search,
+.group-dropdown,
+.note-input {
+    width: calc(100% - 16px); /* Adjust width to match padding */
+    padding: 14px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background-color: #fff;
+    font-size: 16px;
+    box-sizing: border-box;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    margin-bottom: 16px; /* Consistent spacing */
+}
+/* General Styles for Form Elements */
+.form-search,
+.group-dropdown,
+.note-input {
+    width: calc(100% - 16px); /* Adjust width to match padding */
+    padding: 14px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background-color: #fff;
+    font-size: 16px;
+    box-sizing: border-box;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    margin-bottom: 16px; /* Consistent spacing */
+}
+
+.form-search:focus,
+.group-dropdown:focus,
+.note-input:focus {
+    border-color: #4CAF50;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+    outline: none;
+}
+
+/* Specific Styles for the Dropdown */
+.group-dropdown {
+    appearance: none; /* Remove default dropdown arrow */
+    background-image: linear-gradient(45deg, transparent 50%, #666 50%),
+                      linear-gradient(135deg, #666 50%, transparent 50%);
+    background-position: calc(100% - 16px) center;
+    background-size: 12px 12px;
+    background-repeat: no-repeat;
+}
+
+/* Read-only Styles for Note Input */
+.note-input[readonly] {
+    background-color: #f5f5f5; /* Light grey background */
+    border-color: #ddd; /* Lighter border color */
+    color: #999; /* Grey text color */
+    cursor: pointer; /* Show pointer cursor to indicate it's clickable */
+    box-shadow: none; /* Remove box-shadow */
+}
+
+
+/* Styles for headings */
+h3, h4 {
+    color: #333;
+    margin-bottom: 10px;
+}
+
+h3 {
+    font-size: 18px;
+}
+
+h4 {
+    font-size: 16px;
+}
+
+/* Span inside h3 for data count */
+#dataCount {
+    font-weight: bold;
+    color:black;
+}
+
+/* Form styles */
+.dataForm {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.dataForm label {
+    display: block;
+    margin-bottom: 8px;
+}
+
+.dataForm input[type="text"],
+.dataForm input[type="number"] {
+    width: calc(100% - 16px); /* Adjust for padding */
+    padding: 8px;
+    margin-bottom: 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+.dataForm button[type="submit"] {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+/* Search Form Styles */
+#searchForm {
+    margin: 20px auto;
+    max-width: 400px;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Search Input */
+#searchForm input[type="text"] {
+    width: calc(100% - 16px); /* Adjust for padding */
+    padding: 12px;
+    margin-bottom: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 16px;
+    transition: border-color 0.3s;
+}
+
+#searchForm input[type="text"]:focus {
+    border-color: #4CAF50;
+    outline: none;
+}
+
+/* Dropdown Group Styles */
+.group-dropdown-container {
+    margin: 20px auto;
+    max-width: 400px;
+}
+
+.group-dropdown {
+    width: calc(100% - 16px); /* Adjust for padding */
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #fff;
+    box-sizing: border-box;
+    font-size: 16px;
+    appearance: none; /* Remove default arrow */
+    transition: border-color 0.3s;
+}
+
+.group-dropdown:focus {
+    border-color: #4CAF50;
+    outline: none;
+}
+
+/* Dropdown arrow */
+.group-dropdown-container::after {
+    content: '▼';
+    font-size: 14px;
+    color: #666;
+    position: absolute;
+    right: 16px;
+    top: calc(50% - 6px);
+    pointer-events: none;
+}
+
+.group-dropdown-container {
+    position: relative;
+    width: calc(100% - 16px); /* Adjust for padding */
+    max-width: 400px;
+}
+
+/* Form Button */
+#searchForm button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    text-align: center;
+    font-size: 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+    transition: background-color 0.3s;
+}
+
+#searchForm button:hover {
+    background-color: #45a049;
+}
+
+/* Data list styles */
+ul#dataList {
+    list-style-type: none;
+    padding: 0;
+    display: grid;
+    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+li {
+    background-color: #fff;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+li span {
+    display: block;
+    margin-bottom: 10px;
+}
+
+.timer {
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.edit-button,
+.delete-button,
+.reset-button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 12px;
+    margin-left: 10px;
+    cursor: pointer;
+}
+
+.delete-button {
+    background-color: #f44336;
+}
+
+.reset-button {
+    background-color: #008CBA;
+}
+
+.image-container {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    align-items: center;
+}
+
+.image-container img {
+    width: 40px;
+    height: auto;
+}
+
+.form-checkbox {
+    position: absolute;
+    top: 60px;
+    right: 10px;
+    display: flex;
+    align-items: center;
+}
+
+.scroll-button {
+    position: fixed;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.scroll-to-bottom {
+    top: 20px;
+    right: 20px;
+}
+
+.scroll-to-top {
+    bottom: 20px;
+    right: 20px;
+}
+
+#editModal {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background: #f0f0f0;
+    padding: 20px;
+    border: 1px solid #ccc;
+    z-index: 1000;
+    width: 300px; /* Menambahkan lebar modal untuk estetika */
+}
+
+#editModal div {
+    margin-bottom: 10px;
+}
+
+#editModal input[type="text"] {
+    width: 100%; /* Membuat input mengisi lebar kontainer */
+    padding: 10px; /* Memberikan padding di dalam input */
+    border: 1px solid #ddd; /* Mengubah warna border untuk tampilan lebih bersih */
+    border-radius: 4px; /* Membuat sudut input menjadi melengkung */
+    box-sizing: border-box; /* Menghitung padding dan border dalam lebar total */
+}
+
+#editModal button {
+    padding: 10px 15px; /* Memberikan padding pada tombol */
+    font-size: 16px; /* Mengatur ukuran font tombol */
+    border-radius: 4px; /* Membuat sudut tombol menjadi melengkung */
+    border: none; /* Menghapus border tombol default */
+    background-color: #007bff; /* Mengatur warna latar belakang tombol */
+    color: white; /* Mengatur warna teks tombol */
+    cursor: pointer; /* Mengubah cursor saat hover di tombol */
+}
+
+#editModal button:hover {
+    background-color: #0056b3; /* Mengubah warna latar belakang tombol saat hover */
+}
+
+/* Styles for the floating card modal */
+#editNoteModal {
+    display: none; /* Initially hidden */
+    position: fixed; /* Fixed position to make it float */
+    top: 50%; /* Center vertically */
+    left: 50%; /* Center horizontally */
+    transform: translate(-50%, -50%); /* Adjust for perfect centering */
+    width: 90%; /* Width relative to the viewport */
+    max-width: 400px; /* Maximum width */
+    background-color: #fff; /* White background */
+    border-radius: 8px; /* Rounded corners */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Slight shadow for floating effect */
+    padding: 20px; /* Inner padding */
+    z-index: 1000; /* Ensure it appears above other elements */
+    box-sizing: border-box; /* Ensure padding is included in width calculations */
+}
+
+#editNoteModal div {
+    margin-bottom: 20px; /* Space between input and buttons */
+}
+
+#editNoteModal input[type="text"] {
+    width: 100%; /* Full width */
+    padding: 14px; /* Increase padding */
+    border: 1px solid #ccc; /* Consistent border */
+    border-radius: 4px; /* Rounded corners */
+    font-size: 18px; /* Increase font size */
+    box-sizing: border-box; /* Ensure padding is included in width calculations */
+    transition: border-color 0.3s, box-shadow 0.3s; /* Smooth transitions */
+}
+
+#editNoteModal input[type="text"]:focus {
+    border-color: #4CAF50; /* Border color on focus */
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.2); /* Box shadow on focus */
+    outline: none; /* Remove outline */
+}
+
+#editNoteModal button {
+    background-color: #007bff; /* Blue background */
+    color: #fff; /* White text */
+    border: none; /* Remove default border */
+    border-radius: 4px; /* Rounded corners */
+    padding: 10px 20px; /* Padding inside the button */
+    font-size: 16px; /* Font size */
+    cursor: pointer; /* Pointer cursor on hover */
+    margin-right: 10px; /* Space between buttons */
+    transition: background-color 0.3s; /* Smooth transition for background color */
+}
+
+#editNoteModal button:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+}
+
+/* Style for cancel button */
+#editNoteModal button:last-child {
+    background-color: #f44336; /* Red background */
+}
+
+#editNoteModal button:last-child:hover {
+    background-color: #d32f2f; /* Darker red on hover */
+}
+
+/* Optional: Background overlay for the modal */
+#modalOverlay {
+    display: none; /* Initially hidden */
+    position: fixed; /* Fixed position to cover entire screen */
+    top: 0; /* Start at the top */
+    left: 0; /* Start at the left */
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black */
+    z-index: 999; /* Below the modal */
+}
+
+/* Styles for the reload button */
+#reloadButton {
+    background-color: #007bff; /* Blue background */
+    color: #fff; /* White text */
+    border: none; /* Remove default border */
+    border-radius: 6px; /* Rounded corners */
+    padding: 10px 20px; /* Padding inside the button */
+    font-size: 16px; /* Font size */
+    cursor: pointer; /* Pointer cursor on hover */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Shadow for depth */
+  
+}
+
+#reloadButton:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+    transform: scale(1.1); /* Slightly larger on hover */
+}
+
+
+  </style>
+</head>
+
+<body>
+
+    <div id="countdownDisplay"></div>
+
+    <div id="editNoteModal" style="display:none;">
+        <div>
+            <label for="editNote">Edit Note:</label>
+            <input type="text" id="editNote">
+        </div>
+        <button onclick="submitEditNote()">Submit</button>
+        <button onclick="closeNoteModal()">Cancel</button>
+    </div>
+
+
+    <div id="editModal" style="display:none;">
+        <div>
+            <label for="editNomor">Nomor:</label>
+            <input type="text" id="editNomor">
+        </div>
+        <div>
+            <label for="editNama">Nama:</label>
+            <input type="text" id="editNama">
+        </div>
+        <div>
+            <label for="editLink">Link:</label>
+            <input type="text" id="editLink">
+        </div>
+        <button onclick="submitEditData()">Submit</button>
+        <button onclick="closeModal()">Cancel</button>
+    </div>
+
+
+
+    <input type="text" id="searchInput" class="form-search" placeholder="Cari nama...">
+    <br><br>
+
+    <div style="display: flex; justify-content: space-between;">
+        <h3>Total Data: <span id="dataCount">0</span></h3>
+        <button id="reloadButton">Reload</button>
+    </div>
+
+
+    <!-- Tombol untuk menggulir ke bawah -->
+    <button id="scrollToBottomBtn" class="scroll-button scroll-to-bottom">Scroll to Bottom</button>
+
+    <!-- Dropdown for selecting groups -->
+    <h4>Pilih Grup:</h4>
+    <select id="groupSelect" class="group-dropdown">
+        <option value="">Semua Grup</option>
+        <option value="Tap hand">Tap Hand</option>
+        <option value="Tap bot">Tap Bot</option>
+        <option value="Claim only">Claim only</option>
+        <option value="Claim + task">Claim + Task</option>
+        <option value="Claim + play">Claim + Play</option>
+        <option value="Checkbox">Checkbox</option>
+        <option value="Sementara">Sementara</option>
+    </select>
+
+    <ul id="dataList"></ul>
+
+    <button id="scrollToTopBtn" class="scroll-button scroll-to-top">Scroll to Top</button>
+
+    <h2 style="text-align: center;">Buat List</h2>
+
+    <form id="dataForm" class="dataForm">
+        <label for="nama">Nama:</label>
+        <input type="text" name="nama" id="nama" placeholder="Masukkan nama" required>
+        <br><br>
+        <label for="nomor">Nomor:</label>
+        <input type="number" name="nomor" id="nomor" placeholder="Masukkan nomor" required>
+        <br><br>
+        <label for="link">Link Telegram:</label>
+        <input type="text" name="link" id="link" placeholder="Masukkan link" required>
+        <button type="submit">Submit</button>
+    </form>
+
+
+
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
+        import { getDatabase, ref, set, get, child, remove, update } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyArJ1nln6fDepanPT51mM-FUhBheXOXB_Y",
+            authDomain: "reminder-d84a2.firebaseapp.com",
+            projectId: "reminder-d84a2",
+            storageBucket: "reminder-d84a2.appspot.com",
+            messagingSenderId: "1020985301424",
+            appId: "1:1020985301424:web:427ccb088fa1a721fb9e75",
+            databaseURL: "https://reminder-d84a2-default-rtdb.asia-southeast1.firebasedatabase.app/"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        // Function to start countdown to midnight
+        function startMidnightTimer() {
+            const now = new Date();
+            const midnight = new Date();
+            midnight.setHours(24, 0, 0, 0);
+
+            const remainingTime = midnight - now;
+
+            if (remainingTime > 0) {
+                const countdown = setInterval(() => {
+                    const now = new Date();
+                    const remainingTime = midnight - now;
+
+                    if (remainingTime <= 0) {
+                        clearInterval(countdown);
+                        document.getElementById('countdownDisplay').textContent = 'Waktu habis!';
+                        saveMidnightTimestamp(); // Save the timestamp in Firebase
+                    } else {
+                        const hours = Math.floor(remainingTime / (1000 * 60 * 60));
+                        const minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
+                        const seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
+                        document.getElementById('countdownDisplay').textContent = `Waktu menuju 00:00: ${hours}:${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+                    }
+                }, 1000);
+            }
+        }
+
+        // Function to save the midnight timestamp to Firebase
+        function saveMidnightTimestamp() {
+            const now = Date.now();
+            const dataRef = ref(database, 'midnightTimestamp');
+            update(dataRef, {
+                timestamp: now
+            }).then(() => {
+                console.log('Midnight timestamp saved.');
+            }).catch((error) => {
+                console.error('Gagal menyimpan timestamp: ', error);
+            });
+        }
+
+        // Start the midnight countdown timer
+        startMidnightTimer();
+
+        // Function to fetch and display data from Firebase
+        function fetchData() {
+            const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+            const selectedGroup = document.getElementById('groupSelect').value;
+            const dbRef = ref(database);
+            get(child(dbRef, 'users')).then((snapshot) => {
+                if (snapshot.exists()) {
+                    const dataList = document.getElementById('dataList');
+                    const dataCount = document.getElementById('dataCount');
+                    dataList.innerHTML = ''; // Clear existing data
+                    const expiredItems = [];
+                    const activeItems = [];
+
+                    snapshot.forEach((childSnapshot) => {
+                        const data = childSnapshot.val();
+                        const groups = Array.isArray(data.group) ? data.group : [data.group];
+
+                        if (data.nama.toLowerCase().includes(searchQuery) &&
+                            (selectedGroup === '' || groups.includes(selectedGroup))) {
+
+                            const listItem = document.createElement('li');
+                            listItem.innerHTML =
+                                `<span>Nama: ${data.nama}</span>
+                        <span>Nomor: ${data.nomor}</span>
+                        <span class="timer"></span>`;
+                            const timerSpan = listItem.querySelector('.timer');
+
+                            // Append the reset button
+                            const resetButton = document.createElement('button');
+                            resetButton.classList.add('reset-button');
+                            resetButton.textContent = 'Link Telegram';
+                            resetButton.addEventListener('click', () => {
+                                DataResetTimer(childSnapshot.key, data.link); // Reset timer for this data entry and open link
+                            });
+                            listItem.appendChild(resetButton);
+
+                            // Append the image element
+                            const imageContainer = document.createElement('div');
+                            imageContainer.classList.add('image-container');
+                            const image = document.createElement('img');
+                            image.src = 'green.png';
+                            image.style.display = 'none'; // Initially hidden
+                            imageContainer.appendChild(image);
+                            listItem.appendChild(imageContainer);
+
+                            // Start or resume countdown timer
+                            const now = Date.now();
+                            const timestamp = data.timestamp || now;
+                            const timePassed = now - timestamp;
+                            const countdownMinutes = data.nomor * 60 - Math.floor(timePassed / 1000);
+
+                            if (countdownMinutes <= 0) {
+                                expiredItems.push(listItem);
+                            } else {
+                                activeItems.push(listItem);
+                            }
+
+                            DataStartTimer(countdownMinutes, timerSpan, image);
+                        }
+                    });
+
+                    // Update the data count
+                    dataCount.textContent = snapshot.size;
+
+                    // Display expired items first
+                    expiredItems.forEach(item => dataList.appendChild(item));
+                    // Display active items
+                    activeItems.forEach(item => dataList.appendChild(item));
+                } else {
+                    console.log('No data available');
+                    // Update the data count
+                    document.getElementById('dataCount').textContent = '0';
+                }
+            }).catch((error) => {
+                console.error('Gagal membaca data: ', error);
+            });
+        }
+
+        // Function to reset timer and open link in a new tab
+        function DataResetTimer(key, link) {
+            const dataRef = ref(database, 'users/' + key);
+            update(dataRef, {
+                timestamp: Date.now() // Reset the timestamp
+            }).then(() => {
+                window.open(link, '_blank');
+                fetchData(); // Refresh the data list
+            }).catch((error) => {
+                console.error('Gagal me-reset timer: ', error);
+            });
+        }
+
+        // Function to start countdown timers
+        function DataStartTimer(minutes, displayElement, imageElement) {
+            let timer = minutes;
+            const countdown = setInterval(() => {
+                const minutes = Math.floor(timer / 60);
+                const seconds = timer % 60;
+                displayElement.textContent = `Waktu tersisa: ${minutes}:${seconds < 10 ? '0' : ''}${seconds} menit`;
+
+                if (--timer < 0) {
+                    clearInterval(countdown);
+                    displayElement.textContent = 'Waktu habis!';
+                    imageElement.style.display = 'block'; // Show the image when time is up
+                }
+            }, 1000);
+        }
+
+        // Initial data fetch
+        fetchData();
+    </script>
+</body>
+
+</html>
