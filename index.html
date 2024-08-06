@@ -448,7 +448,8 @@ li span {
 
 <body>
 
-    <div id="countdownDisplay"></div>
+    <div id="countdown"></div>
+
 
     <div id="editNoteModal" style="display:none;">
         <div>
@@ -543,102 +544,60 @@ li span {
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
 
+        document.getElementById('searchInput').addEventListener('input', function () {
+            fetchData();
+        });
 
+        document.getElementById('groupSelect').addEventListener('change', function () {
+            fetchData();
+        });
 
-        // Function to start countdown to 14:28 WIB and reset attempts at that time
-        function startCountdownToTargetTime() {
-            function updateTimer() {
+        let globalAttempts = {}; // Object to store attempts for each data item
+        let countdownInterval; // Variable to store the countdown interval ID
+
+        function startCountdownMidnight() {
+            const display = document.getElementById('countdown');
+
+            function updateCountdown() {
                 const now = new Date();
-                const targetTime = new Date();
-                targetTime.setHours(14, 47, 0, 0); // Set to the target time (14:28 WIB)
+                const midnight = new Date();
+                midnight.setHours(22, 23, 0, 0); // Set to the desired time (e.g., 21:48:00)
 
-                // Check if the current time is past the target time for today
-                if (now > targetTime) {
-                    // Set the target time to 14:28 WIB the next day
-                    targetTime.setDate(targetTime.getDate() + 1);
+                if (now.getTime() >= midnight.getTime()) {
+                    midnight.setDate(midnight.getDate() + 1);
                 }
 
-                const timeDifference = targetTime - now;
+                const timeRemaining = midnight - now;
+                const seconds = Math.floor((timeRemaining / 1000) % 60);
+                const minutes = Math.floor((timeRemaining / (1000 * 60)) % 60);
+                const hours = Math.floor((timeRemaining / (1000 * 60 * 60)) % 24);
 
-                const hours = Math.floor((timeDifference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((timeDifference % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((timeDifference % (1000 * 60)) / 1000);
+                display.textContent = `Sisa waktu: ${hours} jam ${minutes} menit ${seconds} detik`;
 
-                document.getElementById('countdownDisplay').textContent = `Waktu menuju 14:28: ${hours}h ${minutes < 10 ? '0' : ''}${minutes}m ${seconds < 10 ? '0' : ''}${seconds}s`;
+                if (hours === 0 && minutes === 0 && seconds === 0) {
+                    // Stop the countdown
+                    clearInterval(countdownInterval);
 
-                if (timeDifference <= 0) {
-                    clearInterval(timerInterval); // Clear the interval when we reach the target time
-                    saveMidnightTimestamp(); // Save the timestamp in Firebase and reset attempts
-
-                    // Reload the page to restart the countdown for the next day
-                    location.reload();
+                    // Reset all attempts in Firebase
+                    resetAttemptsAtMidnight().then(() => {
+                        // Reload the page after attempts are reset
+                        window.location.reload();
+                    }).catch((error) => {
+                        console.error('Gagal me-reset attempts: ', error);
+                    });
                 }
             }
 
-            // Start the interval to update the timer every second
-            const timerInterval = setInterval(updateTimer, 1000);
+            // Start the countdown
+            countdownInterval = setInterval(updateCountdown, 1000);
         }
-
-        // Function to save the target time timestamp to Firebase and reset attempts
-        function saveMidnightTimestamp() {
-            const dataRef = ref(database, 'users');
-            get(dataRef).then((snapshot) => {
-                if (snapshot.exists()) {
-                    snapshot.forEach((childSnapshot) => {
-                        const userKey = childSnapshot.key;
-                        const userRef = ref(database, 'users/' + userKey);
-
-                        // Reset attempts to 0
-                        update(userRef, {
-                            attempts: 0,
-                            lastReset: Date.now() // Optionally store when the reset occurred
-                        }).then(() => {
-                            console.log(`Attempts reset for user ${userKey}.`);
-                        }).catch((error) => {
-                            console.error('Gagal mereset attempts: ', error);
-                        });
-                    });
-                }
-            }).catch((error) => {
-                console.error('Gagal membaca data: ', error);
-            });
-        }
-
-        // Reset attempts when the page is loaded
-        function resetAttemptsOnPageLoad() {
-            const dataRef = ref(database, 'users');
-            get(dataRef).then((snapshot) => {
-                if (snapshot.exists()) {
-                    snapshot.forEach((childSnapshot) => {
-                        const userKey = childSnapshot.key;
-                        const userRef = ref(database, 'users/' + userKey);
-
-                        // Reset attempts to 0
-                        update(userRef, {
-                            attempts: 0
-                        }).then(() => {
-                            console.log(`Attempts reset to 0 for user ${userKey} on page load.`);
-                        }).catch((error) => {
-                            console.error('Gagal mereset attempts: ', error);
-                        });
-                    });
-                }
-            }).catch((error) => {
-                console.error('Gagal membaca data: ', error);
-            });
-        }
-
-        // Call the reset function when the page loads
-        resetAttemptsOnPageLoad();
-
-        // Start the countdown timer
-        startCountdownToTargetTime();
 
 
         function fetchData() {
             const searchQuery = document.getElementById('searchInput').value.toLowerCase();
             const selectedGroup = document.getElementById('groupSelect').value;
             const dbRef = ref(database);
+
             get(child(dbRef, 'users')).then((snapshot) => {
                 if (snapshot.exists()) {
                     const dataList = document.getElementById('dataList');
@@ -655,63 +614,67 @@ li span {
                             (selectedGroup === '' || groups.includes(selectedGroup))) {
 
                             const listItem = document.createElement('li');
+                            const dataKey = childSnapshot.key;
 
-                            // Create an element for attempts
-                            const attemptsText = document.createElement('small');
-                            attemptsText.textContent = `Attempts: ${data.attempts}`;
-                            listItem.appendChild(attemptsText);
+                            // Get attempts from the database if exists, otherwise initialize to 0
+                            globalAttempts[dataKey] = data.attempts || 0;
 
-                            listItem.innerHTML +=
-                                `<span>Nama: ${data.nama}</span>
+                            listItem.innerHTML = `
+                        <span class="attempts-count">Attempts: ${globalAttempts[dataKey]}</span><br>
+                        <span>Nama: ${data.nama}</span>
                         <span>Nomor: ${data.nomor}</span>
-                        <span class="timer"></span>`;
-
+                        <span class="timer"></span>
+                    `;
                             const timerSpan = listItem.querySelector('.timer');
+                            const attemptsSpan = listItem.querySelector('.attempts-count');
 
-                            // Append the reset button
                             const resetButton = document.createElement('button');
                             resetButton.classList.add('reset-button');
                             resetButton.textContent = 'Link Telegram';
                             resetButton.addEventListener('click', () => {
-                                DataResetTimer(childSnapshot.key, data.link, attemptsText); // Reset timer for this data entry and open link
+                                // Update attempts and display the new value
+                                globalAttempts[dataKey]++;
+                                attemptsSpan.textContent = `Attempts: ${globalAttempts[dataKey]}`;
+
+                                // Save updated attempts to Firebase
+                                update(ref(database, 'users/' + dataKey), {
+                                    attempts: globalAttempts[dataKey]
+                                });
+
+                                // Reset timer for this data entry and open link
+                                DataResetTimer(dataKey, data.link);
                             });
                             listItem.appendChild(resetButton);
 
-                            // Append the image element
                             const imageContainer = document.createElement('div');
                             imageContainer.classList.add('image-container');
                             const image = document.createElement('img');
                             image.src = 'green.png';
-                            image.style.display = 'none'; // Initially hidden
+                            image.style.display = 'none';
                             imageContainer.appendChild(image);
                             listItem.appendChild(imageContainer);
 
-                            // Start or resume countdown timer
                             const now = Date.now();
                             const timestamp = data.timestamp || now;
                             const timePassed = now - timestamp;
-                            const countdownMinutes = data.nomor * 60 - Math.floor(timePassed / 1000);
+                            const DataCountdownMinutes = data.nomor * 60 - Math.floor(timePassed / 1000);
 
-                            if (countdownMinutes <= 0) {
+                            if (DataCountdownMinutes <= 0) {
                                 expiredItems.push(listItem);
                             } else {
                                 activeItems.push(listItem);
                             }
 
-                            DataStartTimer(countdownMinutes, timerSpan, image);
+                            DataStartTimer(DataCountdownMinutes, timerSpan, image, attemptsSpan, dataKey);
                         }
                     });
 
-                    // Update the data count
                     dataCount.textContent = snapshot.size;
 
-                    // Display expired items first
                     expiredItems.forEach(item => dataList.appendChild(item));
-                    // Display active items
                     activeItems.forEach(item => dataList.appendChild(item));
                 } else {
                     console.log('No data available');
-                    // Update the data count
                     document.getElementById('dataCount').textContent = '0';
                 }
             }).catch((error) => {
@@ -719,35 +682,25 @@ li span {
             });
         }
 
-        // Function to reset timer, increment attempts, and open link in a new tab
-        function DataResetTimer(key, link, attemptsText) {
+        function DataResetTimer(key, link) {
             const dataRef = ref(database, 'users/' + key);
-            get(dataRef).then((snapshot) => {
-                if (snapshot.exists()) {
-                    const currentAttempts = snapshot.val().attempts || 0;
-                    const newAttempts = currentAttempts + 1;
-
-                    // Update attempts in Firebase
-                    update(dataRef, {
-                        timestamp: Date.now(), // Reset the timestamp
-                        attempts: newAttempts // Increment attempts
-                    }).then(() => {
-                        window.open(link, '_blank');
-                        attemptsText.textContent = `Attempts: ${newAttempts}`; // Update the attempts count in the UI
-                        fetchData(); // Refresh the data list
-                    }).catch((error) => {
-                        console.error('Gagal me-reset timer: ', error);
-                    });
-                }
+            update(dataRef, {
+                timestamp: Date.now()
+            }).then(() => {
+                window.open(link, '_blank');
+                fetchData();
             }).catch((error) => {
-                console.error('Gagal membaca data: ', error);
+                console.error('Gagal me-reset timer: ', error);
             });
         }
 
-
-        // Function to start countdown timers
-        function DataStartTimer(minutes, displayElement, imageElement) {
+        function DataStartTimer(minutes, displayElement, imageElement, attemptsSpan, dataKey) {
             let timer = minutes;
+            displayElement.addEventListener('click', () => {
+                globalAttempts[dataKey]++;
+                attemptsSpan.textContent = `Attempts: ${globalAttempts[dataKey]}`;
+            });
+
             const countdown = setInterval(() => {
                 const minutes = Math.floor(timer / 60);
                 const seconds = timer % 60;
@@ -756,15 +709,38 @@ li span {
                 if (--timer < 0) {
                     clearInterval(countdown);
                     displayElement.textContent = 'Waktu habis!';
-                    imageElement.style.display = 'block'; // Show the image when time is up
+                    imageElement.style.display = 'block';
                 }
             }, 1000);
         }
 
 
 
-        // Initial data fetch
+        function resetAttemptsAtMidnight() {
+            const dbRef = ref(database, 'users');
+            return get(dbRef).then((snapshot) => {
+                if (snapshot.exists()) {
+                    const updatePromises = [];
+                    snapshot.forEach((childSnapshot) => {
+                        const dataKey = childSnapshot.key;
+                        updatePromises.push(
+                            update(ref(database, 'users/' + dataKey), {
+                                attempts: 0
+                            }).catch((error) => {
+                                console.error('Gagal me-reset attempts: ', error);
+                            })
+                        );
+                    });
+                    return Promise.all(updatePromises);
+                }
+            }).catch((error) => {
+                console.error('Gagal membaca data untuk reset: ', error);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', startCountdownMidnight);
         fetchData();
+
     </script>
 </body>
 
